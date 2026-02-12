@@ -1,0 +1,11 @@
+description,affectedAsset,threatType,likelihood,impact,severity,status
+Suspicious email with malicious attachment detected,Employee Device,Phishing,4,3,Medium,Open
+Ransomware detected on file server,Server,Malware,5,5,High,Investigating
+Unauthorized access attempt to customer database,Database,Data Breach,3,5,High,Mitigated
+Employee sharing credentials via Slack,Employee Device,Insider Threat,2,4,Medium,Open
+Multiple accounts using password123,Web App,Weak Password,5,2,Medium,Closed
+DDoS attack on public API endpoint,Network,Network Attack,4,4,High,Investigating
+Phishing campaign targeting finance team,Employee Device,Phishing,3,4,Medium,Open
+Outdated SSL certificates on production servers,Server,Network Attack,2,3,Low,Open
+SQL injection vulnerability in login form,Web App,Data Breach,3,5,High,Mitigated
+Former employee still has VPN access,Network,Insider Threat,2,5,Medium,Closed
