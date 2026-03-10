@@ -1,4 +1,5 @@
-import { FormEvent, useState } from 'react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -77,7 +78,7 @@ export const LoginPage: React.FC = () => {
             className="btn-primary w-full"
             disabled={submitting}
           >
-            {submitting ? 'Signing in…' : 'Sign in'}
+            {submitting ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
 

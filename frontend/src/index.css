@@ -10,7 +10,7 @@
 
 @layer components {
   .card {
-    @apply relative rounded-3xl border border-slate-800/50 bg-gradient-to-br from-slate-900/90 via-slate-900/50 to-slate-950/90 p-8 shadow-2xl backdrop-blur-xl;
+    @apply relative isolate rounded-3xl border border-slate-800/50 bg-gradient-to-br from-slate-900/90 via-slate-900/50 to-slate-950/90 p-8 shadow-2xl backdrop-blur-xl transition-transform duration-300;
     background-image: 
       radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
       radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.1) 0px, transparent 50%);
@@ -18,12 +18,16 @@
 
   .card::before {
     content: '';
-    @apply absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500;
+    @apply pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500;
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
   }
 
   .card:hover::before {
     @apply opacity-100;
+  }
+
+  .card > * {
+    @apply relative z-10;
   }
 
   .glass-card {
@@ -44,7 +48,7 @@
   }
 
   .btn-primary {
-    @apply relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-8 py-4 text-sm font-black text-white shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-indigo-500/50 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-8 py-4 text-sm font-black text-white shadow-2xl transition-all duration-200 hover:scale-105 hover:shadow-indigo-500/50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   .btn-primary::before {
@@ -61,19 +65,31 @@
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-700 bg-slate-900/50 px-8 py-4 text-sm font-black text-slate-100 backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:border-indigo-500 hover:bg-slate-800/50;
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-slate-700 bg-slate-900/50 px-8 py-4 text-sm font-black text-slate-100 backdrop-blur-xl transition-all duration-200 hover:scale-105 hover:border-indigo-500 hover:bg-slate-800/50 active:scale-[0.98];
   }
 
   .btn-success {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-3 text-xs font-black text-white shadow-2xl shadow-emerald-500/30 transition-all duration-300 hover:scale-105 hover:shadow-emerald-500/50;
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-3 text-xs font-black text-white shadow-2xl shadow-emerald-500/30 transition-all duration-200 hover:scale-105 hover:shadow-emerald-500/50 active:scale-[0.98];
   }
 
   .btn-danger {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-red-600 to-pink-600 px-6 py-3 text-xs font-black text-white shadow-2xl shadow-red-500/30 transition-all duration-300 hover:scale-105 hover:shadow-red-500/50;
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-red-600 to-pink-600 px-6 py-3 text-xs font-black text-white shadow-2xl shadow-red-500/30 transition-all duration-200 hover:scale-105 hover:shadow-red-500/50 active:scale-[0.98];
   }
 
   .input {
     @apply w-full rounded-2xl border-2 border-slate-700/50 bg-slate-900/50 px-6 py-4 text-sm text-slate-100 placeholder-slate-500 backdrop-blur-xl outline-none transition-all duration-300 focus:border-indigo-500 focus:bg-slate-900/80 focus:ring-4 focus:ring-indigo-500/20;
+  }
+
+  .micro-interaction {
+    @apply transition-all duration-200;
+  }
+
+  .micro-interaction:hover {
+    @apply -translate-y-0.5;
+  }
+
+  .micro-interaction:active {
+    @apply translate-y-0 scale-[0.99];
   }
 
   .badge {
@@ -165,5 +181,65 @@
     position: relative;
     z-index: 10;
     pointer-events: auto;
+  }
+
+  /* Custom Range Sliders */
+  .slider-likelihood,
+  .slider-impact {
+    @apply w-full h-3 rounded-full appearance-none cursor-pointer transition-all duration-300;
+    outline: none;
+    touch-action: pan-y;
+  }
+
+  .slider-likelihood::-webkit-slider-thumb {
+    @apply appearance-none w-6 h-6 rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 cursor-pointer shadow-lg shadow-indigo-500/50 transition-all duration-300;
+    border: 3px solid rgb(30, 41, 59);
+  }
+
+  .slider-likelihood::-webkit-slider-thumb:hover {
+    @apply scale-125 shadow-xl shadow-indigo-500/70;
+  }
+
+  .slider-likelihood::-webkit-slider-thumb:active {
+    @apply scale-110;
+  }
+
+  .slider-likelihood::-moz-range-thumb {
+    @apply w-6 h-6 rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 cursor-pointer shadow-lg shadow-indigo-500/50 transition-all duration-300;
+    border: 3px solid rgb(30, 41, 59);
+  }
+
+  .slider-likelihood::-moz-range-thumb:hover {
+    @apply scale-125 shadow-xl shadow-indigo-500/70;
+  }
+
+  .slider-impact::-webkit-slider-thumb {
+    @apply appearance-none w-6 h-6 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 cursor-pointer shadow-lg shadow-purple-500/50 transition-all duration-300;
+    border: 3px solid rgb(30, 41, 59);
+  }
+
+  .slider-impact::-webkit-slider-thumb:hover {
+    @apply scale-125 shadow-xl shadow-purple-500/70;
+  }
+
+  .slider-impact::-webkit-slider-thumb:active {
+    @apply scale-110;
+  }
+
+  .slider-impact::-moz-range-thumb {
+    @apply w-6 h-6 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 cursor-pointer shadow-lg shadow-purple-500/50 transition-all duration-300;
+    border: 3px solid rgb(30, 41, 59);
+  }
+
+  .slider-impact::-moz-range-thumb:hover {
+    @apply scale-125 shadow-xl shadow-purple-500/70;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  select:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible {
+    @apply outline-none ring-2 ring-indigo-500/60 ring-offset-2 ring-offset-slate-950;
   }
 }

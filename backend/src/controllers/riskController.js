@@ -371,7 +371,27 @@ const getAITrends = async (req, res, next) => {
     const risks = await Risk.find(filters).sort({ createdAt: -1 }).limit(50);
     const trends = await predictRiskTrend(risks);
 
-    res.json(trends || { message: 'AI analysis unavailable' });
+    const total = risks.length;
+    const highSeverity = risks.filter((r) => r.severity === 'High').length;
+    const openCount = risks.filter((r) => r.status === 'Open' || r.status === 'Investigating').length;
+    const now = Date.now();
+    const updatedLast24h = risks.filter(
+      (r) => now - new Date(r.updatedAt).getTime() <= 24 * 60 * 60 * 1000
+    ).length;
+
+    res.json({
+      trend: trends?.trend || 'Stable',
+      vulnerableAreas: Array.isArray(trends?.vulnerableAreas) ? trends.vulnerableAreas : [],
+      predictions: Array.isArray(trends?.predictions) ? trends.predictions : [],
+      recommendations: Array.isArray(trends?.recommendations) ? trends.recommendations : [],
+      lastUpdated: new Date().toISOString(),
+      metrics: {
+        total,
+        highSeverity,
+        openCount,
+        updatedLast24h,
+      },
+    });
   } catch (err) {
     next(err);
   }

@@ -26,14 +26,10 @@ export const RisksPage: React.FC = () => {
       if (filters.status) params.set('status', filters.status);
       if (filters.threatType) params.set('threatType', filters.threatType);
 
-      const { data } = await api.get<Risk[]>(
-        `/risks${params.toString() ? `?${params.toString()}` : ''}`,
-      );
+      const { data } = await api.get<Risk[]>(`/risks${params.toString() ? `?${params.toString()}` : ''}`);
       setRisks(data);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Unable to load risks right now.',
-      );
+      setError(err instanceof Error ? err.message : 'Unable to load risks right now.');
     } finally {
       setLoading(false);
     }
@@ -50,9 +46,7 @@ export const RisksPage: React.FC = () => {
 
   const handleStatusChange = async (id: string, status: Risk['status']) => {
     try {
-      setRisks((prev) =>
-        prev.map((r) => (r._id === id ? { ...r, status } : r)),
-      );
+      setRisks((prev) => prev.map((r) => (r._id === id ? { ...r, status } : r)));
       await api.put(`/risks/${id}`, { status });
       await fetchRisks();
     } catch {
@@ -61,52 +55,42 @@ export const RisksPage: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (
-      !window.confirm(
-        'Are you sure you want to permanently delete this risk?',
-      )
-    ) {
+    if (!window.confirm('Are you sure you want to permanently delete this risk?')) {
       return;
     }
     try {
       await api.delete(`/risks/${id}`);
       setRisks((prev) => prev.filter((r) => r._id !== id));
     } catch (err) {
-      alert(
-        err instanceof Error
-          ? err.message
-          : 'Unable to delete this risk right now.',
-      );
+      alert(err instanceof Error ? err.message : 'Unable to delete this risk right now.');
     }
   };
 
   return (
     <DashboardLayout>
-      <div className="mb-6">
-        <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
-          Risk Management
-        </h1>
-        <p className="text-slate-400 mt-2">Monitor, track, and mitigate security threats</p>
+      <div className="mb-6 flex items-start gap-4">
+        <div className="mt-1 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 shadow-lg shadow-indigo-500/40">
+          <svg className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 3l9 4.5v6c0 5-3.8 9.7-9 10.5C6.8 23.2 3 18.5 3 13.5v-6L12 3z" />
+            <path d="M12 8v5" />
+            <circle cx="12" cy="16.5" r="0.8" fill="currentColor" stroke="none" />
+          </svg>
+        </div>
+        <div>
+          <h1 className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-4xl font-black text-transparent">
+            Risk Management
+          </h1>
+          <p className="mt-2 text-slate-400">Monitor, track, and mitigate security threats</p>
+        </div>
       </div>
 
       <div className="space-y-6">
         <CsvOperations onImportSuccess={fetchRisks} />
         <RiskFilters filters={filters} onChange={setFilters} />
         <RiskForm onCreated={handleCreated} />
-        {error && (
-          <div className="px-4 py-3 rounded-xl bg-red-500/10 text-red-300 ring-1 ring-red-500/50 text-sm font-medium">
-            {error}
-          </div>
-        )}
-        <RiskTable
-          risks={risks}
-          loading={loading}
-          onStatusChange={handleStatusChange}
-          onDelete={handleDelete}
-          onRefresh={fetchRisks}
-        />
+        {error && <div className="rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium text-red-300 ring-1 ring-red-500/50">{error}</div>}
+        <RiskTable risks={risks} loading={loading} onStatusChange={handleStatusChange} onDelete={handleDelete} onRefresh={fetchRisks} />
       </div>
     </DashboardLayout>
   );
 };
-

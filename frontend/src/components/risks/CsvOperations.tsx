@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 import { api } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -27,8 +27,7 @@ export const CsvOperations: React.FC<Props> = ({ onImportSuccess }) => {
       formData.append('file', file);
 
       const { data } = await api.post<{ imported: number }>('/risks/import', formData);
-
-      setMessage({ type: 'success', text: `✓ Imported ${data.imported} risks!` });
+      setMessage({ type: 'success', text: `Imported ${data.imported} risks successfully.` });
       onImportSuccess();
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err: any) {
@@ -56,7 +55,7 @@ export const CsvOperations: React.FC<Props> = ({ onImportSuccess }) => {
       link.remove();
       window.URL.revokeObjectURL(url);
 
-      setMessage({ type: 'success', text: '✓ Exported!' });
+      setMessage({ type: 'success', text: 'Export complete.' });
     } catch (err: any) {
       setMessage({
         type: 'error',
@@ -70,8 +69,8 @@ export const CsvOperations: React.FC<Props> = ({ onImportSuccess }) => {
   if (!canUseCsv) {
     return (
       <div className="card">
-        <div className="text-center py-8">
-          <p className="text-slate-400 mb-2">CSV operations require Admin or Security Analyst role</p>
+        <div className="py-8 text-center">
+          <p className="mb-2 text-slate-400">CSV operations require Admin or Security Analyst role.</p>
           <p className="text-sm text-slate-500">Your role: {user?.role}</p>
         </div>
       </div>
@@ -82,12 +81,12 @@ export const CsvOperations: React.FC<Props> = ({ onImportSuccess }) => {
     <div className="card">
       <div className="mb-4">
         <h2 className="text-xl font-black gradient-text">CSV Operations</h2>
-        <p className="text-xs text-slate-400 mt-1">Bulk import/export • Your role: {user?.role}</p>
+        <p className="mt-1 text-xs text-slate-400">Bulk import/export | Your role: {user?.role}</p>
       </div>
 
-      <div className="flex gap-4">
-        <label className="btn-primary cursor-pointer">
-          {importing ? 'Importing...' : '📤 Import CSV'}
+      <div className="flex flex-wrap gap-4">
+        <label className="btn-primary micro-interaction cursor-pointer">
+          {importing ? 'Importing...' : 'Import CSV'}
           <input
             ref={fileInputRef}
             type="file"
@@ -98,22 +97,26 @@ export const CsvOperations: React.FC<Props> = ({ onImportSuccess }) => {
           />
         </label>
 
-        <button onClick={handleExport} disabled={exporting} className="btn-secondary">
-          {exporting ? 'Exporting...' : '📥 Export CSV'}
+        <button onClick={handleExport} disabled={exporting} className="btn-secondary micro-interaction">
+          {exporting ? 'Exporting...' : 'Export CSV'}
         </button>
       </div>
 
       {message && (
-        <div className={`mt-4 p-3 rounded-xl text-sm ${
-          message.type === 'success' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-red-500/10 text-red-300'
-        }`}>
+        <div
+          className={`mt-4 rounded-xl p-3 text-sm ${
+            message.type === 'success' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-red-500/10 text-red-300'
+          }`}
+        >
           {message.text}
         </div>
       )}
 
-      <div className="mt-4 p-3 rounded-xl bg-slate-800/30 text-xs text-slate-400">
-        <strong>Supported formats:</strong> CSV (.csv) or Excel (.xlsx, .xls)<br/>
-        <strong>Required columns:</strong> description, likelihood, impact<br/>
+      <div className="mt-4 rounded-xl bg-slate-800/30 p-3 text-xs text-slate-400">
+        <strong>Supported formats:</strong> CSV (.csv) or Excel (.xlsx, .xls)
+        <br />
+        <strong>Required columns:</strong> description, likelihood, impact
+        <br />
         <strong>Optional:</strong> affectedAsset, threatType, status
       </div>
     </div>

@@ -32,6 +32,10 @@ export interface Risk {
     role: Role;
   };
   createdAt: string;
+  aiInsight?: {
+    summary: string;
+    priority: string;
+  };
   updatedAt: string;
 }
 

@@ -13,20 +13,9 @@ interface Props {
   loading: boolean;
 }
 
-const statusOptions: Risk['status'][] = [
-  'Open',
-  'Investigating',
-  'Mitigated',
-  'Closed',
-];
+const statusOptions: Risk['status'][] = ['Open', 'Investigating', 'Mitigated', 'Closed'];
 
-export const RiskTable: React.FC<Props> = ({
-  risks,
-  onStatusChange,
-  onDelete,
-  onRefresh,
-  loading,
-}) => {
+export const RiskTable: React.FC<Props> = ({ risks, onStatusChange, onDelete, onRefresh, loading }) => {
   const { user } = useAuth();
   const [selectedRisk, setSelectedRisk] = useState<Risk | null>(null);
   const [selectedRiskId, setSelectedRiskId] = useState<string | null>(null);
@@ -35,25 +24,18 @@ export const RiskTable: React.FC<Props> = ({
   const canDelete = user?.role === 'Admin';
   const canArchive = user?.role === 'Admin' || user?.role === 'Security Analyst';
   const canUpdateStatus = (risk: Risk) =>
-    (user?.role === 'Admin' ||
-      user?.role === 'Security Analyst' ||
-      risk.reportedBy._id === user?.id) ?? false;
+    (user?.role === 'Admin' || user?.role === 'Security Analyst' || risk.reportedBy._id === user?.id) ?? false;
 
   const handleArchive = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     e.preventDefault();
-    console.log('Archive clicked for:', id);
-    
-    if (!confirm('Archive this risk?')) return;
+    if (!window.confirm('Archive this risk?')) return;
 
     try {
       setActionLoading(id);
-      console.log('Sending archive request...');
       await api.put(`/risks/${id}/archive`);
-      console.log('Archive successful');
       onRefresh();
-    } catch (err) {
-      console.error('Archive error:', err);
+    } catch {
       alert('Failed to archive risk');
     } finally {
       setActionLoading(null);
@@ -63,19 +45,16 @@ export const RiskTable: React.FC<Props> = ({
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     e.preventDefault();
-    console.log('Delete clicked for:', id);
     await onDelete(id);
   };
 
   const handleAIInsight = (e: React.MouseEvent, risk: Risk) => {
     e.stopPropagation();
     e.preventDefault();
-    console.log('AI Insight clicked for:', risk._id);
     setSelectedRisk(risk);
   };
 
   const handleRowClick = (riskId: string) => {
-    console.log('Row clicked:', riskId);
     setSelectedRiskId(riskId);
   };
 
@@ -84,17 +63,19 @@ export const RiskTable: React.FC<Props> = ({
       <div className="card relative">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-black gradient-text">
-              Risk Registry
-            </h2>
-            <p className="text-xs text-slate-400 mt-1">
+            <h2 className="text-lg font-black gradient-text">Risk Registry</h2>
+            <p className="mt-1 text-xs text-slate-400">
               {risks.length} {risks.length === 1 ? 'risk' : 'risks'} found
             </p>
           </div>
           {loading && (
-            <svg className="animate-spin h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24">
+            <svg className="h-5 w-5 animate-spin text-indigo-500" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
             </svg>
           )}
         </div>
@@ -117,8 +98,13 @@ export const RiskTable: React.FC<Props> = ({
               {risks.length === 0 && !loading && (
                 <tr>
                   <td colSpan={8} className="px-4 py-12 text-center">
-                    <svg className="w-16 h-16 mx-auto mb-3 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <svg className="mx-auto mb-3 h-16 w-16 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
                     </svg>
                     <p className="text-sm text-slate-400">No risks found</p>
                   </td>
@@ -128,33 +114,22 @@ export const RiskTable: React.FC<Props> = ({
                 <tr
                   key={risk._id}
                   onClick={() => handleRowClick(risk._id)}
-                  className={`${
-                    risk.severity === 'High'
-                      ? 'bg-red-950/20 hover:bg-red-950/30'
-                      : 'hover:bg-slate-800/30'
-                  } cursor-pointer transition-colors`}
-                  style={{ cursor: 'pointer' }}
+                  className={`cursor-pointer transition-colors ${
+                    risk.severity === 'High' ? 'bg-red-950/20 hover:bg-red-950/30' : 'hover:bg-slate-800/30'
+                  }`}
                 >
                   <td className="max-w-xs">
-                    <div className="text-sm font-bold text-slate-100">
-                      {risk.threatType}
-                    </div>
-                    <div className="mt-1 line-clamp-2 text-xs text-slate-400">
-                      {risk.description}
-                    </div>
+                    <div className="text-sm font-bold text-slate-100">{risk.threatType}</div>
+                    <div className="mt-1 line-clamp-2 text-xs text-slate-400">{risk.description}</div>
                   </td>
                   <td>
-                    <span className="text-xs font-medium text-slate-300">
-                      {risk.affectedAsset}
-                    </span>
+                    <span className="text-xs font-medium text-slate-300">{risk.affectedAsset}</span>
                   </td>
                   <td>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-slate-200">
-                        {risk.riskScore}
-                      </span>
+                      <span className="text-sm font-bold text-slate-200">{risk.riskScore}</span>
                       <span className="text-xs text-slate-500">
-                        ({risk.likelihood}×{risk.impact})
+                        ({risk.likelihood}x{risk.impact})
                       </span>
                     </div>
                   </td>
@@ -175,13 +150,8 @@ export const RiskTable: React.FC<Props> = ({
                     {canUpdateStatus(risk) ? (
                       <select
                         value={risk.status}
-                        onChange={(e) =>
-                          onStatusChange(
-                            risk._id,
-                            e.target.value as Risk['status'],
-                          )
-                        }
-                        className="input text-xs py-1 px-2"
+                        onChange={(e) => onStatusChange(risk._id, e.target.value as Risk['status'])}
+                        className="input micro-interaction px-2 py-1 text-xs"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {statusOptions.map((s) => (
@@ -191,56 +161,42 @@ export const RiskTable: React.FC<Props> = ({
                         ))}
                       </select>
                     ) : (
-                      <span className="text-xs font-medium text-slate-300">
-                        {risk.status}
-                      </span>
+                      <span className="text-xs font-medium text-slate-300">{risk.status}</span>
                     )}
                   </td>
                   <td>
-                    <div className="text-xs font-medium text-slate-200">
-                      {risk.reportedBy.name}
-                    </div>
-                    <div className="text-[10px] text-slate-500">
-                      {risk.reportedBy.role}
-                    </div>
+                    <div className="text-xs font-medium text-slate-200">{risk.reportedBy.name}</div>
+                    <div className="text-[10px] text-slate-500">{risk.reportedBy.role}</div>
                   </td>
-                  <td className="text-xs text-slate-400">
-                    {new Date(risk.createdAt).toLocaleDateString()}
-                  </td>
+                  <td className="text-xs text-slate-400">{new Date(risk.createdAt).toLocaleDateString()}</td>
                   <td className="text-right">
-                    <div className="flex items-center justify-end gap-2" style={{ position: 'relative', zIndex: 10 }}>
-                      {/* AI Insight Button */}
+                    <div className="flex items-center justify-end gap-2">
                       <button
                         type="button"
                         onClick={(e) => handleAIInsight(e, risk)}
-                        className="rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-3 py-1 text-xs font-bold text-white shadow-lg transition-all hover:scale-105"
-                        style={{ cursor: 'pointer', pointerEvents: 'auto' }}
+                        className="rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-3 py-1 text-xs font-bold text-white shadow-lg transition-all duration-200 hover:scale-105 active:scale-[0.98]"
                       >
-                        🤖 AI
+                        AI
                       </button>
 
-                      {/* Archive Button */}
                       {canArchive && (
                         <button
                           type="button"
                           onClick={(e) => handleArchive(e, risk._id)}
                           disabled={actionLoading === risk._id}
-                          className="rounded-xl bg-slate-800 px-3 py-1 text-xs font-bold text-slate-300 transition-all hover:bg-slate-700 disabled:opacity-50"
-                          style={{ cursor: 'pointer', pointerEvents: 'auto' }}
+                          className="rounded-xl bg-slate-800 px-3 py-1 text-xs font-bold text-slate-300 transition-all duration-200 hover:bg-slate-700 active:scale-[0.98] disabled:opacity-50"
                         >
-                          {actionLoading === risk._id ? '...' : '📦'}
+                          {actionLoading === risk._id ? '...' : 'Archive'}
                         </button>
                       )}
 
-                      {/* Delete Button */}
                       {canDelete && (
                         <button
                           type="button"
                           onClick={(e) => handleDelete(e, risk._id)}
-                          className="rounded-xl bg-gradient-to-r from-red-600 to-pink-600 px-3 py-1 text-xs font-bold text-white shadow-lg transition-all hover:scale-105"
-                          style={{ cursor: 'pointer', pointerEvents: 'auto' }}
+                          className="rounded-xl bg-gradient-to-r from-red-600 to-pink-600 px-3 py-1 text-xs font-bold text-white shadow-lg transition-all duration-200 hover:scale-105 active:scale-[0.98]"
                         >
-                          🗑️
+                          Delete
                         </button>
                       )}
                     </div>
@@ -252,21 +208,10 @@ export const RiskTable: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* AI Insight Modal */}
-      {selectedRisk && (
-        <AIInsightModal
-          risk={selectedRisk}
-          onClose={() => setSelectedRisk(null)}
-        />
-      )}
+      {selectedRisk && <AIInsightModal risk={selectedRisk} onClose={() => setSelectedRisk(null)} />}
 
-      {/* Risk Detail Drawer */}
       {selectedRiskId && (
-        <RiskDetailDrawer
-          riskId={selectedRiskId}
-          onClose={() => setSelectedRiskId(null)}
-          onUpdate={onRefresh}
-        />
+        <RiskDetailDrawer riskId={selectedRiskId} onClose={() => setSelectedRiskId(null)} onUpdate={onRefresh} />
       )}
     </>
   );

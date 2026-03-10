@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slider Test</title>
+  <style>
+    body {
+      background: #000;
+      color: #fff;
+      font-family: system-ui;
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .test-section {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 2px solid #334155;
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      background: linear-gradient(to right, #6366f1, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      color: #94a3b8;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+    }
+
+    .slider-container {
+      margin: 30px 0;
+    }
+
+    label {
+      display: block;
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 15px;
+    }
+
+    /* Likelihood Slider */
+    .slider-likelihood {
+      width: 100%;
+      height: 12px;
+      border-radius: 10px;
+      appearance: none;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.3s;
+    }
+
+    .slider-likelihood::-webkit-slider-thumb {
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(to right, #6366f1, #4f46e5);
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
+      border: 3px solid #1e293b;
+      transition: all 0.3s;
+    }
+
+    .slider-likelihood::-webkit-slider-thumb:hover {
+      transform: scale(1.25);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.7);
+    }
+
+    .slider-likelihood::-webkit-slider-thumb:active {
+      transform: scale(1.1);
+    }
+
+    .slider-likelihood::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(to right, #6366f1, #4f46e5);
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
+      border: 3px solid #1e293b;
+      transition: all 0.3s;
+    }
+
+    /* Impact Slider */
+    .slider-impact {
+      width: 100%;
+      height: 12px;
+      border-radius: 10px;
+      appearance: none;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.3s;
+    }
+
+    .slider-impact::-webkit-slider-thumb {
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(to right, #a855f7, #9333ea);
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(168, 85, 247, 0.5);
+      border: 3px solid #1e293b;
+      transition: all 0.3s;
+    }
+
+    .slider-impact::-webkit-slider-thumb:hover {
+      transform: scale(1.25);
+      box-shadow: 0 6px 20px rgba(168, 85, 247, 0.7);
+    }
+
+    .slider-impact::-webkit-slider-thumb:active {
+      transform: scale(1.1);
+    }
+
+    .slider-impact::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(to right, #a855f7, #9333ea);
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(168, 85, 247, 0.5);
+      border: 3px solid #1e293b;
+      transition: all 0.3s;
+    }
+
+    .value-display {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 15px;
+      font-size: 12px;
+    }
+
+    .value-badge {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .likelihood-badge {
+      background: rgba(99, 102, 241, 0.2);
+      color: #818cf8;
+      border: 2px solid rgba(99, 102, 241, 0.5);
+    }
+
+    .impact-badge {
+      background: rgba(168, 85, 247, 0.2);
+      color: #c084fc;
+      border: 2px solid rgba(168, 85, 247, 0.5);
+    }
+
+    .result {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+      border: 2px solid #4f46e5;
+      border-radius: 15px;
+      padding: 20px;
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    .result h3 {
+      color: #94a3b8;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .result .score {
+      font-size: 48px;
+      font-weight: bold;
+      background: linear-gradient(to right, #6366f1, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .result .severity {
+      font-size: 24px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .severity.high { color: #f87171; }
+    .severity.medium { color: #fbbf24; }
+    .severity.low { color: #34d399; }
+
+    .status {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(34, 197, 94, 0.1);
+      border: 2px solid rgba(34, 197, 94, 0.3);
+      border-radius: 10px;
+      color: #4ade80;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-section">
+    <h1>🧪 Slider Functionality Test</h1>
+    <h2>Test if sliders work correctly</h2>
+
+    <div class="slider-container">
+      <label>Likelihood (1–5)</label>
+      <input 
+        type="range" 
+        id="likelihood" 
+        class="slider-likelihood"
+        min="1" 
+        max="5" 
+        step="1" 
+        value="3"
+      >
+      <div class="value-display">
+        <span style="color: #64748b;">Low</span>
+        <span class="value-badge likelihood-badge" id="likelihood-value">3</span>
+        <span style="color: #64748b;">High</span>
+      </div>
+    </div>
+
+    <div class="slider-container">
+      <label>Impact (1–5)</label>
+      <input 
+        type="range" 
+        id="impact" 
+        class="slider-impact"
+        min="1" 
+        max="5" 
+        step="1" 
+        value="3"
+      >
+      <div class="value-display">
+        <span style="color: #64748b;">Low</span>
+        <span class="value-badge impact-badge" id="impact-value">3</span>
+        <span style="color: #64748b;">High</span>
+      </div>
+    </div>
+
+    <div class="result">
+      <h3>RISK SCORE</h3>
+      <div class="score" id="risk-score">9</div>
+      <div class="severity medium" id="severity">Medium</div>
+    </div>
+
+    <div class="status" id="status">
+      ✅ Sliders are working! Try dragging them.
+    </div>
+  </div>
+
+  <script>
+    const likelihoodSlider = document.getElementById('likelihood');
+    const impactSlider = document.getElementById('impact');
+    const likelihoodValue = document.getElementById('likelihood-value');
+    const impactValue = document.getElementById('impact-value');
+    const riskScore = document.getElementById('risk-score');
+    const severity = document.getElementById('severity');
+    const status = document.getElementById('status');
+
+    function updateSliderBackground(slider, value) {
+      const percentage = ((value - 1) / 4) * 100;
+      const color = slider.classList.contains('slider-likelihood') 
+        ? 'rgb(99, 102, 241)' 
+        : 'rgb(168, 85, 247)';
+      slider.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${percentage}%, rgb(51, 65, 85) ${percentage}%, rgb(51, 65, 85) 100%)`;
+    }
+
+    function calculate() {
+      const l = parseInt(likelihoodSlider.value);
+      const i = parseInt(impactSlider.value);
+      const score = l * i;
+
+      likelihoodValue.textContent = l;
+      impactValue.textContent = i;
+      riskScore.textContent = score;
+
+      updateSliderBackground(likelihoodSlider, l);
+      updateSliderBackground(impactSlider, i);
+
+      if (score >= 13) {
+        severity.textContent = 'High';
+        severity.className = 'severity high';
+      } else if (score >= 6) {
+        severity.textContent = 'Medium';
+        severity.className = 'severity medium';
+      } else {
+        severity.textContent = 'Low';
+        severity.className = 'severity low';
+      }
+
+      status.textContent = `✅ Likelihood: ${l} × Impact: ${i} = Risk Score: ${score}`;
+    }
+
+    likelihoodSlider.addEventListener('input', calculate);
+    impactSlider.addEventListener('input', calculate);
+
+    // Initialize
+    calculate();
+
+    console.log('🧪 Slider test loaded');
+    console.log('✅ Likelihood slider:', likelihoodSlider);
+    console.log('✅ Impact slider:', impactSlider);
+    console.log('Try dragging the sliders!');
+  </script>
+</body>
+</html>

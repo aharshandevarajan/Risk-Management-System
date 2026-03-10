@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import type { Risk } from '../../types';
@@ -23,7 +23,7 @@ export const RiskDetailDrawer: React.FC<Props> = ({ riskId, onClose, onUpdate })
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
-    fetchRisk();
+    void fetchRisk();
   }, [riskId]);
 
   const fetchRisk = async () => {
@@ -45,7 +45,7 @@ export const RiskDetailDrawer: React.FC<Props> = ({ riskId, onClose, onUpdate })
       await api.put(`/risks/${risk._id}`, { status });
       setRisk({ ...risk, status });
       onUpdate();
-    } catch (err) {
+    } catch {
       alert('Failed to update status');
     } finally {
       setUpdating(false);
@@ -53,33 +53,37 @@ export const RiskDetailDrawer: React.FC<Props> = ({ riskId, onClose, onUpdate })
   };
 
   const handleArchive = async () => {
-    if (!risk || !confirm('Archive this risk?')) return;
+    if (!risk || !window.confirm('Archive this risk?')) return;
     try {
       await api.put(`/risks/${risk._id}/archive`);
       onUpdate();
       onClose();
-    } catch (err) {
+    } catch {
       alert('Failed to archive');
     }
   };
 
   const handleDelete = async () => {
-    if (!risk || !confirm('Permanently delete this risk?')) return;
+    if (!risk || !window.confirm('Permanently delete this risk?')) return;
     try {
       await api.delete(`/risks/${risk._id}`);
       onUpdate();
       onClose();
-    } catch (err) {
+    } catch {
       alert('Failed to delete');
     }
   };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'High': return 'from-red-500 to-pink-500';
-      case 'Medium': return 'from-amber-500 to-orange-500';
-      case 'Low': return 'from-emerald-500 to-teal-500';
-      default: return 'from-slate-500 to-slate-600';
+      case 'High':
+        return 'from-red-500 to-pink-500';
+      case 'Medium':
+        return 'from-amber-500 to-orange-500';
+      case 'Low':
+        return 'from-emerald-500 to-teal-500';
+      default:
+        return 'from-slate-500 to-slate-600';
     }
   };
 
@@ -89,11 +93,15 @@ export const RiskDetailDrawer: React.FC<Props> = ({ riskId, onClose, onUpdate })
 
   if (loading) {
     return (
-      <div className="fixed inset-y-0 right-0 z-40 w-full max-w-2xl bg-slate-950 shadow-2xl animate-in slide-in-from-right duration-300">
+      <div className="fixed inset-y-0 right-0 z-40 w-full max-w-2xl bg-slate-950 shadow-2xl">
         <div className="flex h-full items-center justify-center">
           <svg className="h-12 w-12 animate-spin text-indigo-500" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
           </svg>
         </div>
       </div>
@@ -102,7 +110,7 @@ export const RiskDetailDrawer: React.FC<Props> = ({ riskId, onClose, onUpdate })
 
   if (!risk) {
     return (
-      <div className="fixed inset-y-0 right-0 z-40 w-full max-w-2xl bg-slate-950 shadow-2xl animate-in slide-in-from-right duration-300">
+      <div className="fixed inset-y-0 right-0 z-40 w-full max-w-2xl bg-slate-950 shadow-2xl">
         <div className="flex h-full items-center justify-center">
           <p className="text-slate-400">Risk not found</p>
         </div>
@@ -112,20 +120,13 @@ export const RiskDetailDrawer: React.FC<Props> = ({ riskId, onClose, onUpdate })
 
   return (
     <>
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 z-40 w-full max-w-2xl overflow-hidden bg-gradient-to-br from-slate-900 to-slate-950 shadow-2xl animate-in slide-in-from-right duration-300">
-        {/* Header */}
+      <div className="fixed inset-y-0 right-0 z-40 w-full max-w-2xl overflow-hidden bg-gradient-to-br from-slate-900 to-slate-950 shadow-2xl">
         <div className={`relative border-b border-slate-700/50 bg-gradient-to-r ${getSeverityColor(risk.severity)} p-6`}>
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-3xl">{risk.severity === 'High' ? '🔴' : risk.severity === 'Medium' ? '🟡' : '🟢'}</span>
+              <div className="mb-2 flex items-center gap-3">
                 <h2 className="text-2xl font-black text-white">{risk.threatType}</h2>
               </div>
               <p className="text-sm text-white/80">{risk.affectedAsset}</p>
@@ -133,9 +134,7 @@ export const RiskDetailDrawer: React.FC<Props> = ({ riskId, onClose, onUpdate })
                 <span className={`badge ${risk.severity === 'High' ? 'badge-high' : risk.severity === 'Medium' ? 'badge-medium' : 'badge-low'}`}>
                   {risk.severity}
                 </span>
-                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-bold text-white">
-                  Score: {risk.riskScore}
-                </span>
+                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-bold text-white">Score: {risk.riskScore}</span>
               </div>
             </div>
             <button
@@ -149,42 +148,35 @@ export const RiskDetailDrawer: React.FC<Props> = ({ riskId, onClose, onUpdate })
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="border-b border-slate-700/50 bg-slate-900/50 px-6">
           <div className="flex gap-1">
             {[
-              { id: 'overview', label: 'Overview', icon: '📋' },
-              { id: 'technical', label: 'Technical', icon: '⚙️' },
-              { id: 'ai', label: 'AI Analysis', icon: '🤖' },
-              { id: 'activity', label: 'Activity', icon: '📊' }
-            ].map(tab => (
+              { id: 'overview', label: 'Overview' },
+              { id: 'technical', label: 'Technical' },
+              { id: 'ai', label: 'AI Analysis' },
+              { id: 'activity', label: 'Activity' },
+            ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as Tab)}
                 className={`px-4 py-3 text-sm font-bold transition-all ${
-                  activeTab === tab.id
-                    ? 'border-b-2 border-indigo-500 text-indigo-400'
-                    : 'text-slate-400 hover:text-slate-200'
+                  activeTab === tab.id ? 'border-b-2 border-indigo-500 text-indigo-400' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <span className="mr-2">{tab.icon}</span>
                 {tab.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Content */}
         <div className="h-[calc(100vh-280px)] overflow-y-auto p-6">
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              {/* Description */}
               <div className="card">
                 <h3 className="mb-3 text-sm font-black uppercase tracking-wider text-slate-400">Description</h3>
                 <p className="text-sm leading-relaxed text-slate-200">{risk.description}</p>
               </div>
 
-              {/* Status */}
               <div className="card">
                 <h3 className="mb-3 text-sm font-black uppercase tracking-wider text-slate-400">Status</h3>
                 {canEdit ? (
@@ -192,10 +184,12 @@ export const RiskDetailDrawer: React.FC<Props> = ({ riskId, onClose, onUpdate })
                     value={risk.status}
                     onChange={(e) => handleStatusChange(e.target.value as Risk['status'])}
                     disabled={updating}
-                    className="input"
+                    className="input micro-interaction"
                   >
-                    {statusOptions.map(s => (
-                      <option key={s} value={s}>{s}</option>
+                    {statusOptions.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
                     ))}
                   </select>
                 ) : (
@@ -203,7 +197,6 @@ export const RiskDetailDrawer: React.FC<Props> = ({ riskId, onClose, onUpdate })
                 )}
               </div>
 
-              {/* Reporter */}
               <div className="card">
                 <h3 className="mb-3 text-sm font-black uppercase tracking-wider text-slate-400">Reported By</h3>
                 <div className="flex items-center gap-3">
@@ -218,7 +211,6 @@ export const RiskDetailDrawer: React.FC<Props> = ({ riskId, onClose, onUpdate })
                 </div>
               </div>
 
-              {/* Timestamps */}
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="card">
                   <h3 className="mb-2 text-xs font-black uppercase tracking-wider text-slate-400">Created</h3>
@@ -262,7 +254,9 @@ export const RiskDetailDrawer: React.FC<Props> = ({ riskId, onClose, onUpdate })
                 <h3 className="mb-3 text-sm font-black uppercase tracking-wider text-slate-400">Risk Calculation</h3>
                 <div className="rounded-xl bg-slate-800/30 p-4">
                   <p className="text-sm text-slate-300">
-                    <span className="font-bold text-indigo-400">Likelihood</span> ({risk.likelihood}) × <span className="font-bold text-purple-400">Impact</span> ({risk.impact}) = <span className="font-bold text-pink-400">Risk Score</span> ({risk.riskScore})
+                    <span className="font-bold text-indigo-400">Likelihood</span> ({risk.likelihood}) x{' '}
+                    <span className="font-bold text-purple-400">Impact</span> ({risk.impact}) ={' '}
+                    <span className="font-bold text-pink-400">Risk Score</span> ({risk.riskScore})
                   </p>
                 </div>
               </div>
@@ -281,14 +275,14 @@ export const RiskDetailDrawer: React.FC<Props> = ({ riskId, onClose, onUpdate })
                     <h3 className="mb-2 text-xs font-black uppercase tracking-wider text-slate-400">Priority</h3>
                     <p className="text-sm font-bold text-slate-200">{risk.aiInsight.priority}</p>
                   </div>
-                  <button onClick={() => setShowAIModal(true)} className="btn-primary w-full">
+                  <button onClick={() => setShowAIModal(true)} className="btn-primary micro-interaction w-full">
                     View Full AI Analysis
                   </button>
                 </div>
               ) : (
-                <div className="card text-center py-12">
+                <div className="card py-12 text-center">
                   <p className="mb-4 text-slate-400">No AI analysis available</p>
-                  <button onClick={() => setShowAIModal(true)} className="btn-primary">
+                  <button onClick={() => setShowAIModal(true)} className="btn-primary micro-interaction">
                     Generate AI Insight
                   </button>
                 </div>
@@ -299,7 +293,7 @@ export const RiskDetailDrawer: React.FC<Props> = ({ riskId, onClose, onUpdate })
           {activeTab === 'activity' && (
             <div className="space-y-4">
               <div className="card">
-                <div className="flex items-center gap-3 mb-4">
+                <div className="mb-4 flex items-center gap-3">
                   <div className="h-2 w-2 rounded-full bg-emerald-500" />
                   <div>
                     <p className="text-sm font-bold text-slate-200">Risk Created</p>
@@ -318,21 +312,20 @@ export const RiskDetailDrawer: React.FC<Props> = ({ riskId, onClose, onUpdate })
           )}
         </div>
 
-        {/* Footer Actions */}
         <div className="border-t border-slate-700/50 bg-slate-900/50 p-6">
           <div className="flex items-center justify-between gap-4">
-            <button onClick={onClose} className="btn-secondary">
+            <button onClick={onClose} className="btn-secondary micro-interaction">
               Close
             </button>
             <div className="flex gap-3">
               {canArchive && (
-                <button onClick={handleArchive} className="btn-secondary">
-                  📦 Archive
+                <button onClick={handleArchive} className="btn-secondary micro-interaction">
+                  Archive
                 </button>
               )}
               {canDelete && (
-                <button onClick={handleDelete} className="btn-danger">
-                  🗑️ Delete
+                <button onClick={handleDelete} className="btn-danger micro-interaction">
+                  Delete
                 </button>
               )}
             </div>
@@ -340,10 +333,7 @@ export const RiskDetailDrawer: React.FC<Props> = ({ riskId, onClose, onUpdate })
         </div>
       </div>
 
-      {/* AI Modal */}
-      {showAIModal && (
-        <AIInsightModal risk={risk} onClose={() => setShowAIModal(false)} />
-      )}
+      {showAIModal && <AIInsightModal risk={risk} onClose={() => setShowAIModal(false)} />}
     </>
   );
 };

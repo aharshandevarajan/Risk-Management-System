@@ -1,19 +1,20 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 
-// Load environment variables from .env file
 dotenv.config();
 
 const app = express();
 
-// Connect to MongoDB
 connectDB();
 
-// Basic middlewares
+// Security: secure HTTP headers
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));

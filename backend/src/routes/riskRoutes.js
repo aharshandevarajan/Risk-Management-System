@@ -18,6 +18,8 @@ const {
 } = require('../controllers/riskController');
 const { authenticate, authorizeRoles } = require('../middleware/auth');
 const { ROLES } = require('../models/User');
+const { validate } = require('../middleware/validate');
+const { createRiskRules, updateRiskRules } = require('../validators/riskValidators');
 const multer = require('multer');
 
 const router = express.Router();
@@ -32,7 +34,6 @@ router.use(authenticate);
 // AI-powered endpoints
 router.get('/ai/trends', getAITrends);
 router.get('/ai/report', getAIReport);
-router.get('/:id/analyze', analyzeRisk);
 
 // Summary for dashboard
 router.get('/summary', getRiskSummary);
@@ -56,22 +57,19 @@ router.get(
 router
   .route('/')
   .get(getRisks)
-  .post(createRisk);
+  .post(createRiskRules, validate, createRisk);
 
-// Get single risk by ID
-router.get('/:id', getRiskById);
-
-router
-  .route('/:id')
-  .put(authorizeRoles(ROLES.ADMIN, ROLES.ANALYST, ROLES.EMPLOYEE), updateRisk)
-  .delete(authorizeRoles(ROLES.ADMIN), deleteRisk);
-
+// Specific ID routes (must be before generic /:id routes)
+router.get('/:id/analyze', analyzeRisk);
+router.get('/:id/ai-insight', getRiskInsight);
+router.post('/:id/ai-insight/regenerate', regenerateRiskInsight);
 router.put('/:id/archive', authorizeRoles(ROLES.ADMIN, ROLES.ANALYST), archiveRisk);
 router.put('/:id/unarchive', authorizeRoles(ROLES.ADMIN, ROLES.ANALYST), unarchiveRisk);
 
-// AI Insight endpoints
-router.get('/:id/ai-insight', getRiskInsight);
-router.post('/:id/ai-insight/regenerate', regenerateRiskInsight);
+// Generic ID routes (must be last)
+router.get('/:id', getRiskById);
+router.put('/:id', authorizeRoles(ROLES.ADMIN, ROLES.ANALYST, ROLES.EMPLOYEE), updateRiskRules, validate, updateRisk);
+router.delete('/:id', authorizeRoles(ROLES.ADMIN), deleteRisk);
 
 module.exports = router;
 

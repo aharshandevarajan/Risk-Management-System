@@ -1,17 +1,27 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const hasValidApiKey = () =>
+  Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.length >= 20);
+
+const getModel = () => {
+  if (!hasValidApiKey()) return null;
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  return genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+};
+
+const parseJsonFromModelText = (text) => {
+  const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) return null;
+  return JSON.parse(jsonMatch[0]);
+};
 
 const generateRiskInsight = async (risk) => {
-  // Try AI first
   try {
-    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY.length < 20) {
-      throw new Error('Invalid API key');
-    }
+    const model = getModel();
+    if (!model) throw new Error('Gemini key not configured');
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-    
-    const prompt = `You are a professional cybersecurity analyst. Analyze this SPECIFIC risk in detail:
+    const prompt = `You are a professional cybersecurity analyst. Analyze this specific risk in detail.
 
 RISK DETAILS:
 - Description: ${risk.description}
@@ -22,33 +32,25 @@ RISK DETAILS:
 - Risk Score: ${risk.riskScore}/25
 - Severity Level: ${risk.severity}
 
-Provide a DETAILED, SPECIFIC analysis based on the exact description and asset mentioned above. DO NOT give generic responses.
-
-Return ONLY valid JSON (no markdown, no code blocks):
+Return only valid JSON:
 {
-  "summary": "2-3 sentences explaining THIS SPECIFIC risk based on the description '${risk.description}' affecting '${risk.affectedAsset}'",
-  "rootCause": "Technical root cause analysis specific to '${risk.description}' and '${risk.affectedAsset}'",
-  "businessImpact": "Business impact specific to '${risk.affectedAsset}' with risk score ${risk.riskScore}/25",
-  "probabilityExplanation": "Detailed explanation why this specific risk has ${risk.likelihood}/5 likelihood based on the description",
-  "mitigation": "Numbered list of 5 specific mitigation steps for '${risk.description}' on '${risk.affectedAsset}'",
-  "prevention": "Long-term prevention strategy tailored to this ${risk.threatType} threat on ${risk.affectedAsset}",
-  "priority": "Priority level (Critical/High/Medium/Low) with timeline based on ${risk.severity} severity and ${risk.riskScore}/25 score",
-  "suggestedOwner": "Specific team name responsible for ${risk.affectedAsset}"
+  "summary": "2-3 sentence analysis",
+  "rootCause": "Specific technical cause",
+  "businessImpact": "Business impact for this asset",
+  "probabilityExplanation": "Why this likelihood is appropriate",
+  "mitigation": "Numbered list of five specific actions",
+  "prevention": "Long-term prevention strategy",
+  "priority": "Priority with timeline",
+  "suggestedOwner": "Responsible team"
 }`;
 
     const result = await model.generateContent(prompt);
-    const text = result.response.text().replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const insight = JSON.parse(jsonMatch[0]);
-      insight.generatedAt = new Date();
-      console.log('✓ AI generated insight for:', risk.description.substring(0, 50));
-      return insight;
-    }
-    throw new Error('No JSON found');
+    const insight = parseJsonFromModelText(result.response.text());
+    if (!insight) throw new Error('Model did not return JSON');
+
+    insight.generatedAt = new Date();
+    return insight;
   } catch (error) {
-    console.log('AI failed, using fallback:', error.message);
     return generateFallbackInsight(risk);
   }
 };
@@ -61,104 +63,205 @@ const generateFallbackInsight = (risk) => {
   const likelihood = risk.likelihood || 3;
   const impact = risk.impact || 3;
 
-  // Generate specific insights based on threat type and description
   const threatData = {
-    'Phishing': {
-      root: `Email-based attack targeting ${asset}. The description "${desc}" indicates social engineering tactics exploiting user trust and lack of security awareness.`,
-      mitigation: `1. Implement advanced email filtering for ${asset}\n2. Deploy anti-phishing tools with URL scanning\n3. Conduct targeted security training for ${asset} users\n4. Enable DMARC/SPF/DKIM authentication\n5. Set up incident response for phishing attempts on ${asset}`,
-      owner: `${asset} Security Team`
+    Phishing: {
+      root: `Email-based attack targeting ${asset}. The description "${desc}" indicates social engineering tactics.`,
+      mitigation: `1. Enable anti-phishing filters for ${asset}\n2. Enforce MFA for users\n3. Add domain spoofing controls\n4. Train users with simulations\n5. Monitor high-risk mailbox activity`,
+      owner: `${asset} Security Team`,
     },
-    'Malware': {
-      root: `Malicious software threat to ${asset}. Based on "${desc}", this indicates potential endpoint compromise requiring immediate containment.`,
-      mitigation: `1. Isolate ${asset} from network immediately\n2. Deploy EDR solution on ${asset}\n3. Perform full malware scan and forensics\n4. Update antivirus signatures for ${asset}\n5. Patch vulnerabilities on ${asset} systems`,
-      owner: `${asset} Operations Team`
+    Malware: {
+      root: `Malicious software risk to ${asset}. The event "${desc}" suggests endpoint compromise potential.`,
+      mitigation: `1. Isolate affected hosts\n2. Run EDR containment playbook\n3. Patch exploitable software\n4. Refresh signatures and IOC rules\n5. Validate recovery integrity`,
+      owner: `${asset} Operations Team`,
     },
     'Data Breach': {
-      root: `Data exposure risk on ${asset}. The incident "${desc}" suggests unauthorized access or data leakage requiring urgent investigation.`,
-      mitigation: `1. Audit all access logs for ${asset}\n2. Implement DLP controls on ${asset}\n3. Encrypt sensitive data on ${asset} (AES-256)\n4. Review and restrict ${asset} permissions\n5. Deploy monitoring for ${asset} data flows`,
-      owner: `${asset} Data Protection Team`
+      root: `Data exposure risk on ${asset}. The incident "${desc}" suggests unauthorized access or data leakage.`,
+      mitigation: `1. Audit access logs\n2. Rotate secrets and keys\n3. Enable strict data access policies\n4. Encrypt sensitive stores\n5. Add data exfiltration monitoring`,
+      owner: `${asset} Data Protection Team`,
     },
     'Network Attack': {
-      root: `Network-level threat targeting ${asset}. The attack pattern "${desc}" indicates potential intrusion or service disruption.`,
-      mitigation: `1. Enable IDS/IPS for ${asset} network segment\n2. Implement network segmentation around ${asset}\n3. Close unnecessary ports on ${asset}\n4. Deploy next-gen firewall for ${asset}\n5. Monitor ${asset} traffic for anomalies`,
-      owner: `${asset} Network Security Team`
+      root: `Network-level threat targeting ${asset}. The pattern "${desc}" indicates intrusion/disruption attempts.`,
+      mitigation: `1. Segment network zones\n2. Harden firewall rules\n3. Deploy IDS/IPS signatures\n4. Rate-limit exposed services\n5. Enable anomaly monitoring`,
+      owner: `${asset} Network Security Team`,
     },
     'Insider Threat': {
-      root: `Internal security risk involving ${asset}. The situation "${desc}" suggests privilege misuse or unauthorized activity requiring investigation.`,
-      mitigation: `1. Review ${asset} access permissions immediately\n2. Deploy user behavior analytics for ${asset}\n3. Implement privileged access management on ${asset}\n4. Enable detailed audit logging for ${asset}\n5. Conduct security interview regarding ${asset} access`,
-      owner: `${asset} Compliance Team`
+      root: `Internal abuse/misuse risk on ${asset}. The case "${desc}" indicates privilege misuse potential.`,
+      mitigation: `1. Review privilege assignments\n2. Enable behavior analytics\n3. Add approval for sensitive actions\n4. Increase audit logging\n5. Run access recertification`,
+      owner: `${asset} Compliance Team`,
     },
     'Weak Password': {
-      root: `Authentication weakness on ${asset}. The issue "${desc}" indicates inadequate password controls exposing ${asset} to unauthorized access.`,
-      mitigation: `1. Force password reset for ${asset} accounts\n2. Implement MFA on ${asset} immediately\n3. Deploy password manager for ${asset} users\n4. Enforce strong password policy on ${asset}\n5. Scan ${asset} credentials against breach databases`,
-      owner: `${asset} Identity Management Team`
-    }
+      root: `Authentication weakness on ${asset}. The issue "${desc}" indicates inadequate credential controls.`,
+      mitigation: `1. Force credential reset\n2. Enforce MFA\n3. Add strong password policy\n4. Block breached passwords\n5. Enable login anomaly detection`,
+      owner: `${asset} Identity Team`,
+    },
   };
 
   const data = threatData[risk.threatType] || threatData['Data Breach'];
-  
-  // Calculate priority based on actual score and severity
+
   let priority;
   if (severity === 'High' || score >= 15) {
-    priority = 'Critical - Immediate action required (0-24 hours)';
+    priority = 'Critical - immediate response (0-24 hours)';
   } else if (severity === 'Medium' || score >= 9) {
-    priority = 'High - Address within 72 hours';
+    priority = 'High - address within 72 hours';
   } else {
-    priority = 'Medium - Resolve within 1 week';
+    priority = 'Medium - resolve within 7 days';
   }
 
-  // Generate specific business impact
   const impactLevel = impact >= 4 ? 'severe' : impact >= 3 ? 'significant' : 'moderate';
-  const financialRange = impact >= 4 ? '$100K-$1M' : impact >= 3 ? '$50K-$500K' : '$10K-$100K';
 
   return {
-    summary: `${severity} severity ${risk.threatType} affecting ${asset} (Risk Score: ${score}/25). The incident "${desc.substring(0, 100)}" poses ${impactLevel} risk with ${likelihood}/5 likelihood requiring immediate attention.`,
+    summary: `${severity} ${risk.threatType} risk affecting ${asset} (score ${score}/25). This requires prioritized mitigation and monitoring.`,
     rootCause: data.root,
-    businessImpact: `This ${risk.threatType} on ${asset} could result in ${impactLevel} business disruption. Potential financial impact: ${financialRange}. Operational impact includes ${asset} downtime, data integrity concerns, compliance violations (GDPR/HIPAA/SOX), and reputational damage. Impact score of ${impact}/5 indicates ${impactLevel} consequences.`,
-    probabilityExplanation: `Likelihood rated ${likelihood}/5 based on: (1) Current threat landscape for ${risk.threatType}, (2) ${asset} exposure level and attack surface, (3) Existing security controls on ${asset}, (4) Historical incident patterns. The description "${desc}" indicates ${likelihood >= 4 ? 'high probability' : likelihood >= 3 ? 'moderate probability' : 'lower probability'} of occurrence.`,
+    businessImpact: `This event can cause ${impactLevel} disruption to ${asset}, including downtime, potential compliance impact, and financial loss.`,
+    probabilityExplanation: `Likelihood ${likelihood}/5 is based on current exposure of ${asset}, control maturity, and the incident details: "${desc}".`,
     mitigation: data.mitigation,
-    prevention: `Long-term strategy for ${asset}: (1) Implement Zero Trust architecture for ${asset} access, (2) Deploy 24/7 SIEM monitoring for ${asset}, (3) Conduct quarterly security assessments of ${asset}, (4) Establish incident response playbook for ${risk.threatType} on ${asset}, (5) Maintain continuous security training for ${asset} users, (6) Regular vulnerability scanning of ${asset}, (7) Implement defense-in-depth controls around ${asset}.`,
-    priority: priority,
+    prevention: `Adopt continuous monitoring, regular hardening, access governance, and quarterly tabletop exercises for ${asset}.`,
+    priority,
     suggestedOwner: data.owner,
-    generatedAt: new Date()
+    generatedAt: new Date(),
   };
 };
 
 const analyzeRiskWithAI = async (riskData) => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-    const prompt = `Analyze: ${riskData.threatType} on ${riskData.affectedAsset}. Return JSON: {"severity":"string","mitigation":["step1","step2"],"impact":"string","timeToResolve":"string","aiConfidence":80}`;
+    const model = getModel();
+    if (!model) return null;
+
+    const prompt = `Analyze ${riskData.threatType} on ${riskData.affectedAsset}. Return JSON:
+{"severity":"string","mitigation":["step1","step2"],"impact":"string","timeToResolve":"string","aiConfidence":80}`;
     const result = await model.generateContent(prompt);
-    const text = result.response.text().replace(/```json\n?/g, '').replace(/```\n?/g, '');
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    return jsonMatch ? JSON.parse(jsonMatch[0]) : null;
-  } catch (error) {
+    return parseJsonFromModelText(result.response.text());
+  } catch {
     return null;
   }
+};
+
+const buildFallbackTrend = (risks) => {
+  if (!Array.isArray(risks) || risks.length === 0) {
+    return {
+      trend: 'Stable',
+      vulnerableAreas: ['No critical concentration detected'],
+      predictions: ['Maintain current controls and monitoring cadence'],
+      recommendations: ['Continue periodic review of new risks'],
+    };
+  }
+
+  const byAsset = {};
+  const byThreat = {};
+  const highCount = risks.filter((r) => r.severity === 'High').length;
+
+  for (const risk of risks) {
+    byAsset[risk.affectedAsset] = (byAsset[risk.affectedAsset] || 0) + 1;
+    byThreat[risk.threatType] = (byThreat[risk.threatType] || 0) + 1;
+  }
+
+  const topAssets = Object.entries(byAsset)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([asset]) => asset);
+  const topThreats = Object.entries(byThreat)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2)
+    .map(([threat]) => threat);
+
+  const trend = highCount >= Math.max(2, Math.ceil(risks.length * 0.3)) ? 'Elevated' : 'Stable';
+
+  return {
+    trend,
+    vulnerableAreas: topAssets.length > 0 ? topAssets : ['General infrastructure'],
+    predictions: [
+      `Top recurring threats: ${topThreats.join(', ') || 'mixed'}.`,
+      `Risk pressure on: ${topAssets.join(', ') || 'core systems'}.`,
+    ],
+    recommendations: [
+      'Increase monitoring on top vulnerable assets.',
+      'Prioritize remediation for recurring high-severity threat types.',
+      'Review control effectiveness monthly and tune detection rules.',
+    ],
+  };
+};
+
+const normalizeTrendPayload = (payload, risks) => {
+  const fallback = buildFallbackTrend(risks);
+  if (!payload || typeof payload !== 'object') return fallback;
+
+  const safeList = (value, fallbackList) => {
+    if (!Array.isArray(value)) return fallbackList;
+    const cleaned = value
+      .map((item) => (typeof item === 'string' ? item.trim() : ''))
+      .filter(Boolean);
+    return cleaned.length > 0 ? cleaned : fallbackList;
+  };
+
+  return {
+    trend: typeof payload.trend === 'string' && payload.trend.trim() ? payload.trend.trim() : fallback.trend,
+    vulnerableAreas: safeList(payload.vulnerableAreas, fallback.vulnerableAreas),
+    predictions: safeList(payload.predictions, fallback.predictions),
+    recommendations: safeList(payload.recommendations, fallback.recommendations),
+  };
 };
 
 const predictRiskTrend = async (risks) => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-    const summary = risks.slice(0, 10).map(r => `${r.threatType}:${r.severity}`).join(',');
-    const prompt = `Analyze trends: ${summary}. Return JSON: {"trend":"string","vulnerableAreas":["area1"],"predictions":["pred1"],"recommendations":["rec1"]}`;
+    const model = getModel();
+    if (!model) return buildFallbackTrend(risks);
+
+    const summary = risks
+      .slice(0, 25)
+      .map((r) => `${r.threatType}:${r.severity}:${r.affectedAsset}`)
+      .join(', ');
+    const prompt = `Analyze cybersecurity risk trends from this summary:
+${summary}
+
+Return JSON:
+{"trend":"string","vulnerableAreas":["area1"],"predictions":["pred1"],"recommendations":["rec1"]}`;
+
     const result = await model.generateContent(prompt);
-    const text = result.response.text().replace(/```json\n?/g, '').replace(/```\n?/g, '');
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    return jsonMatch ? JSON.parse(jsonMatch[0]) : null;
-  } catch (error) {
-    return null;
+    const parsed = parseJsonFromModelText(result.response.text());
+    return normalizeTrendPayload(parsed, risks);
+  } catch {
+    return buildFallbackTrend(risks);
   }
+};
+
+const buildFallbackReport = (risks) => {
+  const total = risks.length;
+  const high = risks.filter((r) => r.severity === 'High').length;
+  const medium = risks.filter((r) => r.severity === 'Medium').length;
+  const open = risks.filter((r) => r.status === 'Open' || r.status === 'Investigating').length;
+
+  const assetCounts = risks.reduce((acc, r) => {
+    acc[r.affectedAsset] = (acc[r.affectedAsset] || 0) + 1;
+    return acc;
+  }, {});
+  const topAsset = Object.entries(assetCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'core systems';
+
+  return [
+    `Current portfolio includes ${total} tracked risks, with ${high} high-severity and ${medium} medium-severity cases. ${open} risks are currently open or under investigation, indicating ongoing operational load for the response team.`,
+    `Primary exposure concentration is around ${topAsset}. Immediate focus should remain on high-severity containment, closure of aged open items, and tighter preventive controls for repeated threat patterns.`,
+  ].join('\n\n');
 };
 
 const generateRiskReport = async (risks) => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-    const prompt = `Generate executive summary for ${risks.length} risks, ${risks.filter(r => r.severity === 'High').length} high severity. Write 2 professional paragraphs.`;
+    const model = getModel();
+    if (!model) return buildFallbackReport(risks);
+
+    const total = risks.length;
+    const high = risks.filter((r) => r.severity === 'High').length;
+    const open = risks.filter((r) => r.status === 'Open' || r.status === 'Investigating').length;
+    const prompt = `Generate a concise executive cybersecurity report in 2 paragraphs.
+Use:
+- Total risks: ${total}
+- High severity: ${high}
+- Open/investigating: ${open}
+Focus on exposure posture and immediate priorities.`;
+
     const result = await model.generateContent(prompt);
-    return result.response.text();
-  } catch (error) {
-    return 'Unable to generate report at this time.';
+    const text = result.response.text()?.trim();
+    return text || buildFallbackReport(risks);
+  } catch {
+    return buildFallbackReport(risks);
   }
 };
 
@@ -166,5 +269,5 @@ module.exports = {
   generateRiskInsight,
   analyzeRiskWithAI,
   predictRiskTrend,
-  generateRiskReport
+  generateRiskReport,
 };

@@ -1,4 +1,5 @@
-import { FormEvent, useState } from 'react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
 import type { Risk } from '../../types';
 
 interface Props {
@@ -46,8 +47,7 @@ export const RiskForm: React.FC<Props> = ({ onCreated }) => {
   };
 
   const riskScore = draft.likelihood * draft.impact;
-  const severity =
-    riskScore >= 13 ? 'High' : riskScore >= 6 ? 'Medium' : 'Low';
+  const severity = riskScore >= 13 ? 'High' : riskScore >= 6 ? 'Medium' : 'Low';
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -61,8 +61,7 @@ export const RiskForm: React.FC<Props> = ({ onCreated }) => {
     try {
       setSubmitting(true);
       const res = await fetch(
-        (import.meta.env.VITE_API_URL || 'http://localhost:5000/api') +
-          '/risks',
+        (import.meta.env.VITE_API_URL || 'http://localhost:5000/api') + '/risks',
         {
           method: 'POST',
           headers: {
@@ -76,13 +75,11 @@ export const RiskForm: React.FC<Props> = ({ onCreated }) => {
             likelihood: draft.likelihood,
             impact: draft.impact,
           }),
-        }
+        },
       );
 
       if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as
-          | { message?: string }
-          | null;
+        const body = (await res.json().catch(() => null)) as { message?: string } | null;
         throw new Error(body?.message || 'Failed to create risk');
       }
 
@@ -109,7 +106,7 @@ export const RiskForm: React.FC<Props> = ({ onCreated }) => {
           <h2 className="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
             Report New Risk
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="mt-1 text-xs text-slate-400">
             Capture threats early for security team triage
           </p>
         </div>
@@ -144,10 +141,8 @@ export const RiskForm: React.FC<Props> = ({ onCreated }) => {
           </label>
           <select
             value={draft.threatType}
-            onChange={(e) =>
-              update('threatType', e.target.value as Draft['threatType'])
-            }
-            className="input"
+            onChange={(e) => update('threatType', e.target.value as Draft['threatType'])}
+            className="input micro-interaction"
           >
             <option value="">Select threat type</option>
             {threatTypes.map((t) => (
@@ -163,10 +158,8 @@ export const RiskForm: React.FC<Props> = ({ onCreated }) => {
           </label>
           <select
             value={draft.affectedAsset}
-            onChange={(e) =>
-              update('affectedAsset', e.target.value as Draft['affectedAsset'])
-            }
-            className="input"
+            onChange={(e) => update('affectedAsset', e.target.value as Draft['affectedAsset'])}
+            className="input micro-interaction"
           >
             <option value="">Select asset</option>
             {assets.map((a) => (
@@ -186,60 +179,80 @@ export const RiskForm: React.FC<Props> = ({ onCreated }) => {
           value={draft.description}
           onChange={(e) => update('description', e.target.value)}
           rows={3}
-          className="input resize-none"
+          className="input micro-interaction resize-none"
           placeholder="Describe the threat, affected systems, and context..."
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2">
         <div>
           <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-400">
-            Likelihood (1–5)
+            Likelihood (1-5)
           </label>
           <input
             type="range"
             min={1}
             max={5}
+            step={1}
             value={draft.likelihood}
             onChange={(e) => update('likelihood', Number(e.target.value))}
-            className="w-full accent-indigo-500"
+            onInput={(e) => update('likelihood', Number((e.target as HTMLInputElement).value))}
+            className="slider-likelihood micro-interaction"
+            style={{
+              background: `linear-gradient(to right, rgb(99, 102, 241) 0%, rgb(99, 102, 241) ${
+                (draft.likelihood - 1) * 25
+              }%, rgb(51, 65, 85) ${(draft.likelihood - 1) * 25}%, rgb(51, 65, 85) 100%)`,
+            }}
           />
-          <div className="mt-2 flex justify-between text-xs">
+          <div className="mt-3 flex justify-between text-xs">
             <span className="text-slate-500">Low</span>
-            <span className="font-bold text-indigo-400">{draft.likelihood}</span>
+            <span className="rounded-full bg-indigo-500/20 px-4 py-1.5 font-black text-indigo-400 ring-2 ring-indigo-500/50">
+              {draft.likelihood}
+            </span>
             <span className="text-slate-500">High</span>
           </div>
         </div>
         <div>
           <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-400">
-            Impact (1–5)
+            Impact (1-5)
           </label>
           <input
             type="range"
             min={1}
             max={5}
+            step={1}
             value={draft.impact}
             onChange={(e) => update('impact', Number(e.target.value))}
-            className="w-full accent-purple-500"
+            onInput={(e) => update('impact', Number((e.target as HTMLInputElement).value))}
+            className="slider-impact micro-interaction"
+            style={{
+              background: `linear-gradient(to right, rgb(168, 85, 247) 0%, rgb(168, 85, 247) ${
+                (draft.impact - 1) * 25
+              }%, rgb(51, 65, 85) ${(draft.impact - 1) * 25}%, rgb(51, 65, 85) 100%)`,
+            }}
           />
-          <div className="mt-2 flex justify-between text-xs">
+          <div className="mt-3 flex justify-between text-xs">
             <span className="text-slate-500">Low</span>
-            <span className="font-bold text-purple-400">{draft.impact}</span>
+            <span className="rounded-full bg-purple-500/20 px-4 py-1.5 font-black text-purple-400 ring-2 ring-purple-500/50">
+              {draft.impact}
+            </span>
             <span className="text-slate-500">High</span>
           </div>
         </div>
       </div>
 
       <div className="flex items-center justify-between gap-3 pt-2">
-        <p className="text-xs text-slate-500">
-          Severity = Likelihood × Impact
-        </p>
-        <button type="submit" className="btn-primary" disabled={submitting}>
+        <p className="text-xs text-slate-500">Severity = Likelihood x Impact</p>
+        <button type="submit" className="btn-primary micro-interaction" disabled={submitting}>
           {submitting ? (
             <>
               <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
               </svg>
               Submitting...
             </>
@@ -255,7 +268,7 @@ export const RiskForm: React.FC<Props> = ({ onCreated }) => {
       </div>
 
       {error && (
-        <div className="px-4 py-3 rounded-xl bg-red-500/10 text-red-300 ring-1 ring-red-500/50 text-sm font-medium">
+        <div className="rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium text-red-300 ring-1 ring-red-500/50">
           {error}
         </div>
       )}

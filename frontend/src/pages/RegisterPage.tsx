@@ -1,4 +1,5 @@
-import { FormEvent, useState } from 'react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -96,7 +97,7 @@ export const RegisterPage: React.FC = () => {
             className="btn-primary w-full"
             disabled={submitting}
           >
-            {submitting ? 'Creating account…' : 'Create account'}
+            {submitting ? 'Creating account...' : 'Create account'}
           </button>
         </form>
 
