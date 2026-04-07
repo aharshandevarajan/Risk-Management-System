@@ -61,7 +61,7 @@ export const RiskForm: React.FC<Props> = ({ onCreated }) => {
     try {
       setSubmitting(true);
       const res = await fetch(
-        (import.meta.env.VITE_API_URL || 'http://localhost:5000/api') + '/risks',
+        (import.meta.env.VITE_API_URL || '/_/backend/api') + '/risks',
         {
           method: 'POST',
           headers: {
