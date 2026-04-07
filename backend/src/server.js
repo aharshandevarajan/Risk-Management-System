@@ -10,7 +10,10 @@ dotenv.config();
 
 const app = express();
 
-connectDB();
+let dbConnected = false;
+connectDB().then((connected) => {
+  dbConnected = Boolean(connected);
+});
 
 // Security: secure HTTP headers
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
@@ -21,7 +24,12 @@ app.use(morgan('dev'));
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Cyber Risk API is running' });
+  res.status(dbConnected ? 200 : 503).json({
+    status: dbConnected ? 'ok' : 'degraded',
+    message: dbConnected
+      ? 'Cyber Risk API is running'
+      : 'API is running, but database is not connected',
+  });
 });
 
 // Routes
@@ -38,7 +46,11 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Server listening on port ${PORT}`);
+  });
+}
+
+module.exports = app;
 
