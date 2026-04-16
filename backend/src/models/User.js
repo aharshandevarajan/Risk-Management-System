@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const ROLES = {
   ADMIN: 'Admin',
@@ -54,4 +54,3 @@ module.exports = {
   User: mongoose.model('User', userSchema),
   ROLES,
 };
-
